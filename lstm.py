@@ -37,7 +37,7 @@ maxSeqLength = 1500
 numDimensions = 50 #number of dimensions in a vector for a word
 
 #other settings
-run_train = False
+run_train = True
 run_test = True
 numClasses = 2
 dir_path = "review_polarity/txt_sentoken/"
