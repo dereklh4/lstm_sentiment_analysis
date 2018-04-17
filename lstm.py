@@ -166,8 +166,8 @@ if run_train:
 		   summary = sess.run(merged, {input_data: nextBatch, labels: nextBatchLabels})
 		   writer.add_summary(summary, i)
 
-		#Save the network every 2,000 training iterations
-		if (i % 2000 == 0 and i != 0):
+		#Save the network every 5,000 training iterations
+		if (i % 5000 == 0 and i != 0):
 			save_path = saver.save(sess, "models/pretrained_lstm.ckpt", global_step=i)
 			print("saved to %s" % save_path)
 	writer.close()
@@ -175,8 +175,16 @@ if run_train:
 ## TEST ##
 
 if run_test:
+	sess = tf.InteractiveSession()
+	saver = tf.train.Saver()
+	saver.restore(sess, tf.train.latest_checkpoint('models'))
+
 	iterations = 10
+	accuracies = []
 	for i in range(iterations):
 		nextBatch, nextBatchLabels = getBatch(batchSize,len(test_review_files),test_ids_matrix)
-		print("Accuracy for this batch:", (sess.run(accuracy, {input_data: nextBatch, labels: nextBatchLabels})) * 100)
+		batch_accuracy = (sess.run(accuracy, {input_data: nextBatch, labels: nextBatchLabels})) * 100
+		accuracies.append(batch_accuracy)
+		print("Accuracy for this batch:", batch_accuracy)
+	print("Avg accuracy: ",np.mean(accuracies))
 
