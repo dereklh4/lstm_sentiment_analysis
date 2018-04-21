@@ -105,6 +105,7 @@ def get_encoded_data(vocab,train=True,mode="freq"):
 		tokenizer = tf.contrib.keras.preprocessing.text.Tokenizer()
 		print("Loading training docs")
 		train_docs = load_docs(train_review_files,vocab)
+		print("Loading test docs")
 		test_docs = load_docs(test_review_files,vocab)
 		print("Fitting tokenizer")
 		tokenizer.fit_on_texts(train_docs)
@@ -116,12 +117,14 @@ def get_encoded_data(vocab,train=True,mode="freq"):
 		np.save(train_savepath,X)
 		np.save(test_savepath,Xtest)
 
+	#get labels
 	for file in train_review_files:
 		label = 1 if string.find(file,"pos") >= 0 else 0
 		labels.append(label)
 	for file in test_review_files:
 		label = 1 if string.find(file,"pos") >= 0 else 0
 		test_labels.append(label)
+		
 	return X,labels,Xtest,test_labels
 
 #get vocab for training set
@@ -130,8 +133,44 @@ with open("review_polarity/train_file_paths.txt") as f:
 vocab = get_vocabulary()
 
 #get encoded dataset
-Xtrain,train_labels,Xtest,test_labels = get_encoded_data(vocab,True,"freq")
+Xtrain,train_labels,Xtest,test_labels = get_encoded_data(vocab,True,"binary")
 print(Xtrain.shape)
 print(len(train_labels))
 print(Xtest.shape)
 print(len(test_labels))
+
+#try a classifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn import tree
+from sklearn import svm
+from sklearn.linear_model import LogisticRegression
+
+#clf = RandomForestClassifier()
+#clf = tree.DecisionTreeClassifier()
+#clf = svm.SVC()
+clf = LogisticRegression(C = 100.0, random_state = 1)
+
+from sklearn.metrics import precision_score, recall_score, f1_score, precision_recall_fscore_support
+clf = LogisticRegression(C = 100.0, random_state = 1)
+print("Training classifier")
+clf.fit(Xtrain,train_labels)
+
+#get training stats
+train_predictions = clf.predict(Xtrain)
+precision,recall,fscore,support = precision_recall_fscore_support(train_labels,train_predictions, average='macro')
+print("--Training Set--")
+print("Precision: " + str(precision))
+print("Recall: " + str(recall))
+print("FScore: " + str(fscore))
+accuracy = len(np.where(train_labels == train_predictions)[0]) / (1.0 * len(train_labels))
+print("Accuracy: " + str(accuracy))
+
+#get test stats
+test_predictions = clf.predict(Xtest)
+precision,recall,fscore,support = precision_recall_fscore_support(test_labels,test_predictions, average='macro')
+print("--Test Set--")
+print("Precision: " + str(precision))
+print("Recall: " + str(recall))
+print("FScore: " + str(fscore))
+accuracy = len(np.where(test_labels == test_predictions)[0]) / (1.0 * len(test_labels))
+print("Accuracy: " + str(accuracy))
